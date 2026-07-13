@@ -9,12 +9,14 @@ async function sendMail() {
 
         // naming everything
         const exchange = "mail_exchange";
-        const routingKey = "send_mail";
-        const queueName = "mail_queue";
+        const routingKeyForSubUser = "send_mail_to_subscribed_users";
+        const routingKeyForNormalUser = "send_mail_to_users";
+        const queueForSubUser = "subscribed_users_mail_queue";
+        const queueForNormalUser = "users_mail_queue";
 
         // message we want to send in queue
         const message = {
-            to: "abc@gmail.com",
+            to: "normalUser@gmail.com",
             from: "harish@gmail.com",
             subject: "Hello TP mail",
             body: "Hello abc!!"
@@ -22,12 +24,15 @@ async function sendMail() {
 
         // creating exhange of "direct" type and queue
         await channel.assertExchange(exchange, "direct", {durable: true});
-        await channel.assertQueue(queueName, {durable: true});
+
+        await channel.assertQueue(queueForSubUser, {durable: true});
+        await channel.assertQueue(queueForNormalUser, {durable: true});
 
         // now routing key is mapped to that specific queue
-        await channel.bindQueue(queueName, exchange, routingKey);
+        await channel.bindQueue(queueForSubUser, exchange, routingKeyForSubUser);
+        await channel.bindQueue(queueForNormalUser, exchange, routingKeyForNormalUser);
 
-        channel.publish(exchange, routingKey, Buffer.from(JSON.stringify(message)));
+        channel.publish(exchange, routingKeyForSubUser, Buffer.from(JSON.stringify(message)));
         
         console.log("Mail data was sent ", message);
 
